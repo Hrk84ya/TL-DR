@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TL;DR - Article Summarizer</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="logo-container">
+                <div class="logo">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="40" height="40" rx="8" fill="#3B82F6"/>
+                        <path d="M11 14H29M11 20H29M11 26H20" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <h1>TL;DR</h1>
+            </div>
+            <p class="tagline">Get concise, intelligent summaries of any article</p>
+        </header>
+        
+        <main>
+            <div class="card">
+                <div class="input-section">
+                    <h2>Paste an article URL</h2>
+                    <p class="input-description">Enter any news article, blog post, or long-form content URL to generate a summary.</p>
+                    <form id="url-form">
+                        <div class="input-group">
+                            <input type="url" id="article-url" placeholder="https://example.com/article" required>
+                            <button type="submit" class="primary-button">
+                                <span class="button-text">Summarize</span>
+                                <span class="button-icon">→</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div id="loading" class="loading-section hidden">
+                    <div class="loader"></div>
+                    <p>Analyzing article content...</p>
+                </div>
+                
+                <div id="error" class="error-section hidden">
+                    <div class="error-icon">❌</div>
+                    <h3>Error</h3>
+                    <p id="error-message"></p>
+                </div>
+                
+                <div id="result" class="result-section hidden">
+                    <div class="result-header">
+                        <h2 id="article-title"></h2>
+                        <div class="meta-bar">
+                            <a id="original-link" target="_blank" rel="noopener noreferrer">Read original article</a>
+                            <button id="copy-button" class="icon-button" title="Copy summary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="summary-container">
+                        <div id="summary-content" class="summary-content"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="features-section">
+                <div class="feature">
+                    <div class="feature-icon">⚡</div>
+                    <div class="feature-text">
+                        <h3>Fast Summaries</h3>
+                        <p>Get the key points from any article in seconds</p>
+                    </div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">📱</div>
+                    <div class="feature-text">
+                        <h3>Works Everywhere</h3>
+                        <p>Summarize content on any device, anytime</p>
+                    </div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔍</div>
+                    <div class="feature-text">
+                        <h3>Smart Extraction</h3>
+                        <p>Our algorithm identifies the most important information</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>© 2025 TL;DR - Article Summarizer. All rights reserved.</p>
+        </footer>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlForm = document.getElementById('url-form');
+            const articleUrl = document.getElementById('article-url');
+            const loadingSection = document.getElementById('loading');
+            const errorSection = document.getElementById('error');
+            const errorMessage = document.getElementById('error-message');
+            const resultSection = document.getElementById('result');
+            const articleTitle = document.getElementById('article-title');
+            const originalLink = document.getElementById('original-link');
+            const summaryContent = document.getElementById('summary-content');
+            const copyButton = document.getElementById('copy-button');
+            
+            urlForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const url = articleUrl.value.trim();
+                
+                // Reset UI
+                errorSection.classList.add('hidden');
+                resultSection.classList.add('hidden');
+                loadingSection.classList.remove('hidden');
+                
+                // Fetch summary
+                fetch('/summarize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'url=' + encodeURIComponent(url)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    loadingSection.classList.add('hidden');
+                    
+                    if (data.error) {
+                        errorSection.classList.remove('hidden');
+                        errorMessage.textContent = data.error;
+                        return;
+                    }
+                    
+                    resultSection.classList.remove('hidden');
+                    articleTitle.textContent = data.title;
+                    originalLink.href = data.url;
+                    
+                    // Format summary with paragraphs
+                    summaryContent.innerHTML = '';
+                    
+                    data.summary.split('\n\n').forEach(paragraph => {
+                        if (paragraph.trim()) {
+                            const p = document.createElement('p');
+                            p.textContent = paragraph;
+                            summaryContent.appendChild(p);
+                        }
+                    });
+                })
+                .catch(error => {
+                    loadingSection.classList.add('hidden');
+                    errorSection.classList.remove('hidden');
+                    errorMessage.textContent = 'Network error. Please try again later.';
+                    console.error(error);
+                });
+            });
+            
+            // Copy summary to clipboard
+            copyButton.addEventListener('click', function() {
+                const summaryText = Array.from(summaryContent.querySelectorAll('p'))
+                    .map(p => p.textContent)
+                    .join('\n\n');
+                
+                navigator.clipboard.writeText(summaryText)
+                    .then(() => {
+                        // Show feedback
+                        copyButton.classList.add('copied');
+                        setTimeout(() => {
+                            copyButton.classList.remove('copied');
+                        }, 2000);
+                    })
+                    .catch(err => {
+                        console.error('Failed to copy text: ', err);
+                    });
+            });
+        });
+    </script>
+</body>
+</html>
