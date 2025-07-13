@@ -164,12 +164,12 @@ def build_similarity_matrix(sentences, stop_words):
     # Initialize similarity matrix
     similarity_matrix = np.zeros((len(sentences), len(sentences)))
     
-    for i in range(len(sentences)):
-        for j in range(len(sentences)):
+    for i, _ in enumerate(sentences):
+        for j, item in enumerate(sentences):
             if i == j:  # Same sentence
                 similarity_matrix[i][j] = 1.0
             else:
-                similarity_matrix[i][j] = sentence_similarity(sentences[i], sentences[j], stop_words)
+                similarity_matrix[i][j] = sentence_similarity(sentences[i], item, stop_words)
     
     return similarity_matrix
 
